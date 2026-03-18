@@ -34,7 +34,7 @@ jobs:
       with:
         context: ledgersmb/
         push: true
-        tags: ${{ env.REGISTRY }}/ledgersmb/dev-ledgersmb:latest
+        tags: ${{ env.REGISTRY }}/ledgersmb-devel/dev-ledgersmb:latest
 
   proxy:
     runs-on: ubuntu-latest
@@ -57,7 +57,7 @@ jobs:
       with:
         context: nginx/
         push: true
-        tags: ${{ env.REGISTRY }}/ledgersmb/dev-nginx:latest
+        tags: ${{ env.REGISTRY }}/ledgersmb-devel/dev-nginx:latest
 
   postgres:
     runs-on: ubuntu-latest
@@ -85,7 +85,7 @@ jobs:
           PGBASE=${{ matrix.pg_version }}
         context: postgres/
         push: true
-        tags: ${{ env.REGISTRY }}/ledgersmb/dev-postgres:${{ matrix.pg_version }}
+        tags: ${{ env.REGISTRY }}/ledgersmb-devel/dev-postgres:${{ matrix.pg_version }}
 
   cleanup:
     runs-on: ubuntu-latest
