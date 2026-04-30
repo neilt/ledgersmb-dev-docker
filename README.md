@@ -32,8 +32,9 @@ sudo apt-get -y update
 sudo apt-get -y upgrade
 sudo apt-get -y install make git curl gnupg ca-certificates lsb-release
 
-# If the following fails, see the instructions at
+# For a more up to date version, see the instructions at
 # https://docs.docker.com/engine/install
+# On Ubuntu the apt version works fine
 sudo apt-get -y install docker-buildx docker-compose-v2
 
 # Add the current user to the 'docker' group
@@ -82,29 +83,37 @@ cp doc/conf/ledgersmb.yaml ledgersmb.yaml
 # some settings you might want to edit, however the comments in the `yaml` file
 # are pretty good.
 
-# YAML example configuration via script (your config may vary)
-# 
-# The following were tested with yq (https://github.com/mikefarah/yq/) version v4.45.1
-# Your distribution's version may be too old. If so, after removing the 
-# distribution's version, follow the installation instructions at the yq URL.
-#
-# yq -i '.db.connect_data.hostaddr = "192.168.1.218"' LedgerSMB/ledgersmb.yaml
-# yq -i '.db.connect_data.port = 5001' LedgerSMB/ledgersmb.yaml
-# yq -i '.db.connect_data.dbname = "postgres"' LedgerSMB/ledgersmb.yaml
-# yq -i '.db.connect_data.user = "postgres"' LedgerSMB/ledgersmb.yaml
-# yq -i '.db.connect_data.password = "abc"' LedgerSMB/ledgersmb.yaml
-# yq -i '.cookie.name = "LedgerSMB-<version>"' LedgerSMB/ledgersmb.yaml
+# YAML example configuration via script (your config may vary) 
+# Your distribution's version of yq is probably too old, so please do not use it.
+
+# yq version desired
+VERSION=v4.53.2
+# The platform being installed on. For example,
+# linux_amd64, linux_arm64, linux_arm, linux_386, darwin_amd64, darwin_arm64, windows_amd64, windows_386, etc.
+PLATFORM=linux_amd64
+
+# Download the yq compressed binary and install it
+wget https://github.com/mikefarah/yq/releases/download/${VERSION}/yq_${PLATFORM}.tar.gz -O - |\
+  tar xz && sudo mv yq_${PLATFORM} /usr/local/bin/yq
+
+# Modify ledgersmb.yaml for your installation substituting the correct values
+yq -i '.db.connect_data.hostaddr = "192.168.1.218"' ledgersmb.yaml
+# yq -i '.db.connect_data.port = 5432' ledgersmb.yaml
+# yq -i '.db.connect_data.dbname = "postgres"' ledgersmb.yaml
+# yq -i '.db.connect_data.user = "postgres"' ledgersmb.yaml
+# yq -i '.db.connect_data.password = "abc"' ledgersmb.yaml
+# yq -i '.cookie.name = "LedgerSMB-<version>"' ledgersmb.yaml
 #
 # Use the xyz schema in order for tests to run
-# yq -i '.db.schema = "xyz"' LedgerSMB/ledgersmb.yaml
+# yq -i '.db.schema = "xyz"' ledgersmb.yaml
 #
 # Change logging level from ERROR to TRACE
-# yq e '.logging.level = "TRACE"' -i LedgerSMB/ledgersmb.yaml 
+# yq e '.logging.level = "TRACE"' -i ledgersmb.yaml 
 
-# Create the docker containers
+# Pull the latest docker images from their registries
 ../ldd/lsmb-dev master pull
 
-# Start the docker containers
+# Create and start the docker containers
 ../ldd/lsmb-dev master up -d
 
 # Make the runtime javascript (see options below)
@@ -227,7 +236,7 @@ You can then use a browser to browse your host in development mode using the `de
 ### Environment variables
 
 Defaults can be overridden by setting environment variables. By default,
-`.local/.env` in the LedgerSMB repository clone is read if available at container startup. 
+`.local/.env` in the ldd repository clone is read if available at container startup. 
 Local overrides and can contain the following:
 
 ```sh
@@ -237,20 +246,20 @@ Local overrides and can contain the following:
 # export PGUSER=postgres
 # export PGPASSWORD=abc
 
-# Browser to use by default, can be overriden on command line
+# Browser to use by default, can be overridden on command line
 export BROWSER=${BROWSER:-chrome}
 
-# Browser instances to create, can be overriden on command line
+# Browser instances to create, can be overridden on command line
 export BROWSERS_COUNT=${BROWSERS_COUNT:-5}
 
 # Home directory for the container user
 export HOME_DEV=../LedgerSMB/.local/home
 
 # Uncomment to fix host ports used
-# export LSMB_PORT=5000
-# export LSMB_PORT_DEV=9000
-# export DB_PORT=5432
-# export MAILHOG_PORT=8025
+export LSMB_PORT=5000
+export LSMB_PORT_DEV=9000
+export DB_PORT=5432
+export MAILHOG_PORT=8025
 
 # Uncomment to use a customized ledgersmb-dev-test image.
 # export LSMB_IMAGE=user/ledgersmb-dev-test:latest
@@ -307,7 +316,7 @@ mkdir bin	# If it does not exist.
 ln -s -f -v $HOME/ldd/lsmb-dev $HOME/bin/lsmb-dev
 ```
 
-This symbolic link works automatically for Unbuntu 22.04, Debian 11.4, and Fedora 36 after you logoff and login (or restart). For other distributions you might need to add something like following to the `$USER`'s `.profile` or `.bashrc` as appropriate for the distribution.
+This symbolic link works automatically for Ubuntu 22.04, Debian 11.4, and Fedora 36 after you logoff and login (or restart). For other distributions you might need to add something like following to the `$USER`'s `.profile` or `.bashrc` as appropriate for the distribution.
 
 ```sh
 # set PATH so it includes user's private bin if it exists
@@ -337,7 +346,7 @@ comes up with different IP addresses on the containers than the original
 
 The database gets stored in RAM for performance reasons. If however,
 you want/need to retain databases between container restarts, you can
-change the backing storage to harddisk/ssd by changing the end of `docker-compose.yml` in `ledgersmb-dev-docker` repository clone before the initial startup from
+change the backing storage to disk/ssd by changing the end of `docker-compose.yml` in `ledgersmb-dev-docker` repository clone before the initial startup from
 
 
 ```yaml
@@ -412,8 +421,8 @@ SMTP connections on port 1025.
 A script is provided to help create docker images using different Perl
 versions. These are based on the
 [official Perl docker images](https://hub.docker.com/_/perl/) and are not
-optimised for size, but can be useful for testing version-specific
-behaviour.
+optimized for size, but can be useful for testing version-specific
+behavior.
 
 Running:
 
@@ -449,7 +458,7 @@ Then you are good to go.  If your are running the Docker image on a server or vi
 	# Clone your new Github LedgerSMB git master repository
 	git clone https://github.com/<your Github account name>/LedgerSMB.git
 	```
-	This easily done by just deleting the original clone directory and recloning it with your repository.
+	This easily done by just deleting the original clone directory and re-cloning it with your repository.
 7. Restart the docker containers.
 
 	```bash
